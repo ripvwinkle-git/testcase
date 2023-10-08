@@ -7,7 +7,7 @@ from time import sleep
 from threading import Thread
 import requests
 
-ADDRESS = 'http://server'
+ADDRESS = 'http://gideone-testcase-server'
 
 def post_payload(
         min_records: int = 10,
@@ -22,7 +22,7 @@ def post_new(path: str, timeout: int=10):
     while True:
         try:
             for payload in post_payload():
-                requests.post(path+'/new', params=payload, timeout=0.1)
+                requests.post(path+'/new', params=payload, timeout=1.0)
         except Exception as exception:
             print(exception, file=sys.stdout)
             sleep(timeout)
@@ -32,10 +32,10 @@ def post_new(path: str, timeout: int=10):
 def delete(path: str, count: int=10, timeout: int=10):
     while True:
         try:
-            records = requests.get(path+f'/{count}', timeout=0.1)
+            records = requests.get(path+f'/{count}', timeout=1.0)
             n = 0
             for record in records.json():
-                requests.delete(path+f'/{record["uuid"]}', timeout=0.1)
+                requests.delete(path+f'/{record["uuid"]}', timeout=1.0)
                 n+=1
             print(n, ' records deleted', file=sys.stdout)
         except Exception as exception:
