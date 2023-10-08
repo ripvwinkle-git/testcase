@@ -1,0 +1,60 @@
+services:
+  database:
+    image: "postgres:16.0-bookworm"
+    container_name: database
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+    networks:
+      - gideone-test
+    healthcheck:
+      test: [
+        "CMD",
+        "pg_isready",
+        "--host=127.0.0.1",
+        "--username=postgres",
+        "--port=5432"
+      ]
+      interval: 10s
+      timeout: 30ms
+      retries: 3
+      start_period: 15s
+      start_interval: 1s
+
+  server:
+    build: ./server
+    container_name: server
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    restart: on-failure
+    ports:
+      - "127.0.0.1:8000:80"
+    networks:
+      - gideone-test
+    healthcheck:
+      test: [
+        "CMD",
+        "curl",
+        "127.0.0.1:80/",
+      ]
+      interval: 10s
+      timeout: 30ms
+      retries: 3
+      start_period: 15s
+      start_interval: 1s
+
+  client:
+    build: ./client
+    container_name: client
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - gideone-test
+
+networks:
+  gideone-test:
+    name: gideone-test

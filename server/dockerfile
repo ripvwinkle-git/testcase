@@ -1,0 +1,11 @@
+FROM python:3.11-slim-bookworm
+WORKDIR /
+RUN apt update &&\
+    apt install -y libpq-dev python3-dev gcc &&\
+    apt install -y curl &&\
+    pip install --upgrade pip
+COPY ./requirements.txt /requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /requirements.txt
+ENV POSTGRES_PASSWORD=mysecretpassword
+COPY ./app /app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
