@@ -1,12 +1,12 @@
 version: '2'
 services:
-  gideone-testcase-db:
+  testcase-db:
     image: "postgres:16.0-bookworm"
-    container_name: gideone-testcase-db
+    container_name: testcase-db
     environment:
       - POSTGRES_PASSWORD=mysecretpassword
     networks:
-      - gideone-testcase-network
+      - testcase-network
     healthcheck:
       test: [
         "CMD",
@@ -21,21 +21,21 @@ services:
       start_period: 15s
       start_interval: 1s
 
-  gideone-testcase-server:
+  testcase-server:
     build: ./server
-    image: gideone-testcase-server
-    container_name: gideone-testcase-server
+    image: testcase-server
+    container_name: testcase-server
     environment:
       - POSTGRES_PASSWORD=mysecretpassword
     depends_on:
-      gideone-testcase-db:
+      testcase-db:
         condition: service_healthy
         restart: true
     restart: on-failure
     ports:
       - "127.0.0.1:8000:80"
     networks:
-      - gideone-testcase-network
+      - testcase-network
     healthcheck:
       test: [
         "CMD",
@@ -48,16 +48,16 @@ services:
       start_period: 15s
       start_interval: 1s
 
-  gideone-testcase-client:
+  testcase-client:
     build: ./client
-    image: gideone-testcase-client
-    container_name: gideone-testcase-client
+    image: testcase-client
+    container_name: testcase-client
     depends_on:
-      gideone-testcase-server:
+      testcase-server:
         condition: service_healthy
     networks:
-      - gideone-testcase-network
+      - testcase-network
 
 networks:
-  gideone-testcase-network:
-    name: gideone-testcase-network
+  testcase-network:
+    name: testcase-network

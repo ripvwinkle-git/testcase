@@ -7,7 +7,7 @@ from time import sleep
 from threading import Thread, Lock
 import requests
 
-ADDRESS = 'http://gideone-testcase-server'
+ADDRESS = 'http://testcase-server'
 
 class Counter:
 
@@ -32,28 +32,30 @@ def post_payload(
         for i in range(randint(min_records, max_records))
     ]
 
-def post_new(path: str, timeout: int=5):
+def post_new(path: str, timeout: float=1.0):
     while True:
-        try:
-            for payload in post_payload():
-                requests.post(path+'/new', params=payload, timeout=1.0)
-        except Exception as exception:
-            print(exception, file=sys.stdout)
-            sleep(timeout)
-            continue
+        for payload in post_payload():
+            try:
+                requests.post(path+'/new', params=payload, timeout=0.1)
+            except requests.ReadTimeout as exception:
+                print(exception, file=sys.stdout)
+                continue
         sleep(timeout)
 
-def delete(path: str, counter: Counter, count: int=10, timeout: int=5):
+def delete(path: str, counter: Counter, count: int=10, timeout: float=1.0):
     while True:
         try:
-            records = requests.get(path+f'/{count}', timeout=1.0)
-            for record in records.json():
-                requests.delete(path+f'/{record["uuid"]}', timeout=1.0)
-                counter.increment()
-        except Exception as exception:
+            records = requests.get(path+f'/{count}', timeout=0.1)
+        except requests.ReadTimeout as exception:
             print(exception, file=sys.stdout)
-            sleep(timeout)
             continue
+        for record in records.json():
+            try:
+                requests.delete(path+f'/{record["uuid"]}', timeout=0.1)
+                counter.increment()
+            except requests.ReadTimeout as exception:
+                print(exception, file=sys.stdout)
+        records = []
         sleep(timeout)
 
 def report_deleted(counter: Counter):
@@ -70,6 +72,17 @@ def report_deleted(counter: Counter):
 
 if __name__ == '__main__':
     deleted = Counter()
-    Thread(target=post_new, args=[ADDRESS]).start()
-    Thread(target=delete, args=[ADDRESS, deleted]).start()
-    Thread(target=report_deleted, args=[deleted]).start()
+    Thread(
+        target=post_new,
+        args=[ADDRESS,],
+        kwargs={'timeout': 0.1,}
+    ).start()
+    Thread(
+        target=delete,
+        args=[ADDRESS, deleted,],
+        kwargs={'timeout': 0.1,}
+    ).start()
+    Thread(
+        target=report_deleted,
+        args=[deleted]
+    ).start()
